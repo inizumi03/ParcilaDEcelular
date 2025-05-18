@@ -11,6 +11,7 @@ public class PlayerControlle : MonoBehaviour
 
     [Header("UI")]
     public Image healthBar;
+    public GameObject gameOverCanvas; // <-- Asignar desde el Inspector
 
     [Header("Animación")]
     private Animator animator;
@@ -20,22 +21,31 @@ public class PlayerControlle : MonoBehaviour
     private Vector2 touchEnd;
     public float minSwipeDistance = 50f;
 
+    [Header("Inmunidad")]
+    public float immunityDuration = 3f;
+    private bool isImmune = false;
+
     private void Start()
     {
         animator = GetComponent<Animator>();
         currentHealth = maxHealth;
         UpdateHealthBar();
+
+        if (gameOverCanvas != null)
+            gameOverCanvas.SetActive(false); // Oculta el canvas al inicio
     }
 
     private void Update()
     {
-        HandleSwipe();
+        if (!isImmune)
+        {
+            HandleSwipe();
+        }
     }
 
     private void HandleSwipe()
     {
 #if UNITY_EDITOR
-        // Simulación con teclado para testing en editor
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
             animator.SetTrigger("SwipeLeft");
@@ -63,13 +73,9 @@ public class PlayerControlle : MonoBehaviour
                     {
                         float x = swipe.x;
                         if (x < 0)
-                        {
                             animator.SetTrigger("SwipeLeft");
-                        }
                         else
-                        {
                             animator.SetTrigger("SwipeRight");
-                        }
                     }
                     break;
             }
@@ -78,6 +84,8 @@ public class PlayerControlle : MonoBehaviour
 
     public void TakeDamage(float amount)
     {
+        if (isImmune) return; // Ignorar daño si está inmune
+
         currentHealth -= amount;
         currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
         animator.SetTrigger("Hit");
@@ -87,20 +95,37 @@ public class PlayerControlle : MonoBehaviour
         {
             Die();
         }
+        else
+        {
+            StartCoroutine(StartImmunity());
+        }
+    }
+
+    private IEnumerator StartImmunity()
+    {
+        isImmune = true;
+
+        // Aquí podés agregar efectos visuales si querés (parpadeo, cambio de color, etc.)
+
+        yield return new WaitForSeconds(immunityDuration);
+
+        isImmune = false;
     }
 
     private void UpdateHealthBar()
     {
         if (healthBar != null)
-        {
             healthBar.fillAmount = currentHealth / maxHealth;
-        }
     }
 
     private void Die()
     {
         Debug.Log("Jugador murió");
         animator.SetTrigger("Death");
-        // Aquí podés poner lógica de game over, reinicio, etc.
+
+        if (gameOverCanvas != null)
+            gameOverCanvas.SetActive(true);
+
+        Time.timeScale = 0f; // Pausa el juego
     }
 }
