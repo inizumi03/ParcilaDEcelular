@@ -54,6 +54,10 @@ public class PlayerControlle : MonoBehaviour
         {
             animator.SetTrigger("SwipeRight");
         }
+        if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            animator.SetTrigger("Kick");
+        }
 #endif
 
         if (Input.touchCount > 0)
@@ -72,10 +76,21 @@ public class PlayerControlle : MonoBehaviour
                     if (swipe.magnitude >= minSwipeDistance)
                     {
                         float x = swipe.x;
-                        if (x < 0)
-                            animator.SetTrigger("SwipeLeft");
+                        float y = swipe.y;
+
+                        if (Mathf.Abs(x) > Mathf.Abs(y))
+                        {
+                            if (x < 0)
+                                animator.SetTrigger("SwipeLeft");
+                            else
+                                animator.SetTrigger("SwipeRight");
+                        }
                         else
-                            animator.SetTrigger("SwipeRight");
+                        {
+                            if (y > 0)
+                                animator.SetTrigger("Kick");
+                            // Puedes agregar más casos como swipe abajo si lo deseas
+                        }
                     }
                     break;
             }
@@ -104,8 +119,6 @@ public class PlayerControlle : MonoBehaviour
     private IEnumerator StartImmunity()
     {
         isImmune = true;
-
-        // Aquí podés agregar efectos visuales si querés (parpadeo, cambio de color, etc.)
 
         yield return new WaitForSeconds(immunityDuration);
 

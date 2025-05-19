@@ -7,9 +7,11 @@ public class ColliderActivator : MonoBehaviour
     public Animator playerAnimator;
     public string leftAnimName = "SwipeLeft";
     public string rightAnimName = "SwipeRight";
+    public string kickAnimName = "Kick"; // Nueva animación
 
     public Collider leftCollider;
     public Collider rightCollider;
+    public Collider kickCollider; // Nuevo collider
 
     private void Update()
     {
@@ -23,6 +25,10 @@ public class ColliderActivator : MonoBehaviour
         {
             EnableRightCollider();
         }
+        else if (stateInfo.IsName(kickAnimName))
+        {
+            EnableKickCollider();
+        }
         else
         {
             DisableColliders();
@@ -33,17 +39,27 @@ public class ColliderActivator : MonoBehaviour
     {
         if (leftCollider != null) leftCollider.enabled = true;
         if (rightCollider != null) rightCollider.enabled = false;
+        if (kickCollider != null) kickCollider.enabled = false;
     }
 
     void EnableRightCollider()
     {
         if (rightCollider != null) rightCollider.enabled = true;
         if (leftCollider != null) leftCollider.enabled = false;
+        if (kickCollider != null) kickCollider.enabled = false;
+    }
+
+    void EnableKickCollider()
+    {
+        if (kickCollider != null) kickCollider.enabled = true;
+        if (leftCollider != null) leftCollider.enabled = false;
+        if (rightCollider != null) rightCollider.enabled = false;
     }
 
     void DisableColliders()
     {
         if (leftCollider != null) leftCollider.enabled = false;
         if (rightCollider != null) rightCollider.enabled = false;
+        if (kickCollider != null) kickCollider.enabled = false;
     }
 }
