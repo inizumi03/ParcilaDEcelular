@@ -11,7 +11,7 @@ public class PlayerControlle : MonoBehaviour
 
     [Header("UI")]
     public Image healthBar;
-    public GameObject gameOverCanvas; // <-- Asignar desde el Inspector
+    public GameObject gameOverCanvas;
 
     [Header("Animación")]
     private Animator animator;
@@ -25,6 +25,11 @@ public class PlayerControlle : MonoBehaviour
     public float immunityDuration = 3f;
     private bool isImmune = false;
 
+    [Header("Sonido")]
+    public AudioSource hitSound;
+    public float hitSoundCooldown = 1f;
+    private bool canPlayHitSound = true;
+
     private void Start()
     {
         animator = GetComponent<Animator>();
@@ -32,7 +37,7 @@ public class PlayerControlle : MonoBehaviour
         UpdateHealthBar();
 
         if (gameOverCanvas != null)
-            gameOverCanvas.SetActive(false); // Oculta el canvas al inicio
+            gameOverCanvas.SetActive(false);
     }
 
     private void Update()
@@ -46,18 +51,9 @@ public class PlayerControlle : MonoBehaviour
     private void HandleSwipe()
     {
 #if UNITY_EDITOR
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
-        {
-            animator.SetTrigger("SwipeLeft");
-        }
-        if (Input.GetKeyDown(KeyCode.RightArrow))
-        {
-            animator.SetTrigger("SwipeRight");
-        }
-        if (Input.GetKeyDown(KeyCode.UpArrow))
-        {
-            animator.SetTrigger("Kick");
-        }
+        if (Input.GetKeyDown(KeyCode.LeftArrow)) animator.SetTrigger("SwipeLeft");
+        if (Input.GetKeyDown(KeyCode.RightArrow)) animator.SetTrigger("SwipeRight");
+        if (Input.GetKeyDown(KeyCode.UpArrow)) animator.SetTrigger("Kick");
 #endif
 
         if (Input.touchCount > 0)
@@ -80,16 +76,12 @@ public class PlayerControlle : MonoBehaviour
 
                         if (Mathf.Abs(x) > Mathf.Abs(y))
                         {
-                            if (x < 0)
-                                animator.SetTrigger("SwipeLeft");
-                            else
-                                animator.SetTrigger("SwipeRight");
+                            if (x < 0) animator.SetTrigger("SwipeLeft");
+                            else animator.SetTrigger("SwipeRight");
                         }
                         else
                         {
-                            if (y > 0)
-                                animator.SetTrigger("Kick");
-                            // Puedes agregar más casos como swipe abajo si lo deseas
+                            if (y > 0) animator.SetTrigger("Kick");
                         }
                     }
                     break;
@@ -99,12 +91,18 @@ public class PlayerControlle : MonoBehaviour
 
     public void TakeDamage(float amount)
     {
-        if (isImmune) return; // Ignorar daño si está inmune
+        if (isImmune) return;
 
         currentHealth -= amount;
         currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
         animator.SetTrigger("Hit");
         UpdateHealthBar();
+
+        if (currentHealth > 0f && canPlayHitSound && hitSound != null)
+        {
+            hitSound.Play();
+            StartCoroutine(HitSoundCooldown());
+        }
 
         if (currentHealth <= 0f)
         {
@@ -116,12 +114,17 @@ public class PlayerControlle : MonoBehaviour
         }
     }
 
+    private IEnumerator HitSoundCooldown()
+    {
+        canPlayHitSound = false;
+        yield return new WaitForSeconds(hitSoundCooldown);
+        canPlayHitSound = true;
+    }
+
     private IEnumerator StartImmunity()
     {
         isImmune = true;
-
         yield return new WaitForSeconds(immunityDuration);
-
         isImmune = false;
     }
 
@@ -131,6 +134,25 @@ public class PlayerControlle : MonoBehaviour
             healthBar.fillAmount = currentHealth / maxHealth;
     }
 
+    public void Heal(float amount)
+    {
+        currentHealth += amount;
+        currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+        UpdateHealthBar();
+    }
+
+    public void ActivateTemporaryImmunity(float duration)
+    {
+        StopCoroutine("StartImmunity");
+        StartCoroutine(TemporaryImmunity(duration));
+    }
+
+    private IEnumerator TemporaryImmunity(float duration)
+    {
+        isImmune = true;
+        yield return new WaitForSeconds(duration);
+        isImmune = false;
+    }
     private void Die()
     {
         Debug.Log("Jugador murió");
@@ -139,6 +161,6 @@ public class PlayerControlle : MonoBehaviour
         if (gameOverCanvas != null)
             gameOverCanvas.SetActive(true);
 
-        Time.timeScale = 0f; // Pausa el juego
+        Time.timeScale = 0f;
     }
 }
