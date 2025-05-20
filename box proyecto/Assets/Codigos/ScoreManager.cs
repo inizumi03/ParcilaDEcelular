@@ -1,13 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class ScoreManager : MonoBehaviour
 {
     public static ScoreManager Instance;
 
-    public Text scoreText;
+    public Text scoreText;         // Texto en tiempo real
+    public Text finalScoreText;    // Texto que aparece al final
 
     private int score = 0;
 
@@ -16,7 +18,7 @@ public class ScoreManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);  // Opcional si querés que persista entre escenas
+            DontDestroyOnLoad(gameObject);  // Persistencia (opcional)
         }
         else
         {
@@ -44,6 +46,19 @@ public class ScoreManager : MonoBehaviour
     {
         if (scoreText != null)
             scoreText.text = "Puntos: " + score.ToString();
+    }
+
+    public void ShowFinalScore()
+    {
+        if (finalScoreText != null)
+            finalScoreText.text = "Puntaje Final: " + score.ToString();
+    }
+
+    public void RestartScene()
+    {
+        Time.timeScale = 1f;  // Despausar el juego
+        score = 0;            // Reiniciar puntaje
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
 }
